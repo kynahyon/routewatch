@@ -1,41 +1,57 @@
-/**
- * types.ts
- * Shared type definitions for routewatch.
- */
-
-export interface RouteWatchOptions {
-  /** Global slow-request threshold in milliseconds (default: 1000) */
-  threshold?: number;
-  /** Per-route threshold overrides */
-  routeThresholds?: Record<string, number>;
-  /** Sampling configuration */
-  sampling?: {
-    rate: number;
-    routeOverrides?: Record<string, number>;
-  };
-  /** Custom alert handlers */
-  alertHandlers?: AlertHandler[];
-  /** Logger instance or false to disable logging */
-  logger?: RouteWatchLogger | false;
+export interface TimerResult {
+  startTime: number;
+  getDuration: () => number;
 }
-
-export interface RouteWatchLogger {
-  info(message: string, meta?: Record<string, unknown>): void;
-  warn(message: string, meta?: Record<string, unknown>): void;
-  error(message: string, meta?: Record<string, unknown>): void;
-}
-
-export interface RequestMeta {
-  route: string;
-  method: string;
-  statusCode: number;
-  durationMs: number;
-  timestamp: Date;
-}
-
-export type AlertHandler = (meta: RequestMeta) => void | Promise<void>;
 
 export interface ThresholdConfig {
-  default: number;
-  routes: Record<string, number>;
+  warnMs?: number;
+  criticalMs?: number;
+  routes?: Record<string, { warnMs?: number; criticalMs?: number }>;
+}
+
+export interface LogEntry {
+  timestamp: string;
+  method: string;
+  route: string;
+  statusCode: number;
+  durationMs: number;
+  level: 'info' | 'warn' | 'error';
+  message?: string;
+}
+
+export interface AlertPayload {
+  route: string;
+  method: string;
+  durationMs: number;
+  threshold: number;
+  severity: 'warn' | 'critical';
+}
+
+export interface RouteStats {
+  route: string;
+  method: string;
+  totalRequests: number;
+  slowRequests: number;
+  avgDurationMs: number;
+  p95DurationMs: number;
+  p99DurationMs: number;
+  maxDurationMs: number;
+}
+
+export interface SlowRouteReport {
+  generatedAt: string;
+  totalRoutes: number;
+  routes: RouteStats[];
+}
+
+export interface ReporterConfig {
+  topN?: number;
+  minRequests?: number;
+}
+
+export interface RouteWatchOptions {
+  thresholds?: ThresholdConfig;
+  sampleRate?: number;
+  onAlert?: (payload: AlertPayload) => void;
+  reporter?: ReporterConfig;
 }
