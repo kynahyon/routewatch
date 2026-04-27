@@ -64,7 +64,22 @@ export function createLogger(options: LoggerOptions = {}) {
       timestamp: includeTimestamp ? new Date().toISOString() : '',
     };
 
-    const level: LogLevel = entry.slow ? 'warn' : 'info';
+    const level: LogLevel = resolveLogLevel(entry.statusCode, entry.slow);
     logFn(level, fullEntry);
   };
+}
+
+/**
+ * Determines the log level based on the HTTP status code and whether the
+ * request was considered slow. Status codes >= 500 are logged as errors,
+ * slow requests are logged as warnings, and everything else as info.
+ */
+function resolveLogLevel(statusCode: number, slow: boolean): LogLevel {
+  if (statusCode >= 500) {
+    return 'error';
+  }
+  if (slow) {
+    return 'warn';
+  }
+  return 'info';
 }
